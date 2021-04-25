@@ -16,8 +16,9 @@ import sys
 
 #————————————————————————————#
 
-
+# EC2 Instance Status:
 # Pending: 0, Running: 16, Stopped: 80, Stopping: 64
+
 
 def spinny_things(counter):
     wait_icon = ['—', '\\', '|', '/', '—', '\\', '|', '/']
@@ -57,15 +58,12 @@ def stop_ec2(client, instance_id, state, icon_counter):
             icon_counter += 1
 
         print(instance_data['Reservations'][0]['Instances'][0]['State']['Name'])
-    #     sys.exit()
-    # else:
-    #     sys.exit()
+
     return state
 
 
 def find_public_dns(client, instance_id, state, icon_counter):
     public_dns_name = ''
-    # print("loading")
 
     ## TODO ## Could use a timeout to keep this from getting stuck.
     while not public_dns_name and (state == 16 or state == 0):
@@ -80,7 +78,6 @@ def find_public_dns(client, instance_id, state, icon_counter):
     return public_dns_name
 
 
-## TODO ## Bottom of the config file is a mess.
 def update_config(public_dns_name, config_dir, config_entry):
     with open(config_dir, 'r+') as file:
         data = file.readlines()
@@ -94,4 +91,29 @@ def update_config(public_dns_name, config_dir, config_entry):
         file.writelines(data)
 
 
+def boot_instance(instance_id, config_dir, config_entry):
+    icon_counter = 0
+    client, state = check_state(instance_id)
 
+    if state == 80:
+        state, start_instance = start_ec2(client, instance_id, state)
+        public_dns_name = find_public_dns(client, instance_id, state, icon_counter)
+        update_config(public_dns_name, config_dir, config_entry)
+
+    if state == 16:
+        state = stop_ec2(client, instance_id, state, icon_counter)
+        public_dns_name = find_public_dns(client, instance_id, state, icon_counter)
+        update_config(public_dns_name, config_dir, config_entry)
+
+    print('done')
+
+
+
+
+if __name__ == '__main__':
+    # Provide the following as command line arguments:
+        # AWS instance ID
+        # file path for SSH config file
+        # host name within the config file
+        
+    boot_instance(sys.argv[1], sys.argv[2], sys.argv[3])
