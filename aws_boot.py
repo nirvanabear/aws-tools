@@ -87,7 +87,6 @@ def update_config(public_dns_name, config_dir, config_entry):
                 data[j+2] = "    HostName " + public_dns_name + "\n"
 
     with open(config_dir, 'w') as file:
-        # file.seek(0)
         file.writelines(data)
 
 
@@ -115,5 +114,5 @@ if __name__ == '__main__':
         # AWS instance ID
         # file path for SSH config file
         # host name within the config file
-        
+
     boot_instance(sys.argv[1], sys.argv[2], sys.argv[3])
